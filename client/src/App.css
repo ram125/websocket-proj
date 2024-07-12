@@ -20,12 +20,13 @@
   -webkit-user-select: none;
   -moz-user-select: none; 
   user-select: none;
+  background: gray;
 }
 
 .clicked {
-  background: green;
+  background: red;
 }
 
 .notclicked {
-  background: red;
+  background: green;
 }
