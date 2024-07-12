@@ -28,7 +28,6 @@ function App() {
       };
       socket.onclose = (event) => {
         console.log('WebSocket connection closed:', event);
-
         clearInterval(heartbeat);
 
         reconnectTimeout = setTimeout(() => {
