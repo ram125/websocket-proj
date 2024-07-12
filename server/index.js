@@ -1,4 +1,6 @@
 const express = require('express');
+
+const redis = require('redis');
 const app = express();
 
 const WSSserver = require('express-ws')(app);
@@ -7,6 +9,24 @@ const aWss = WSSserver.getWss();
 const PORT = process.env.PORT || 5000;
 
 let isClicked = 2;
+
+const pubClient = redis.createClient();
+const subClient = redis.createClient();
+
+const channel = 'isClicked';
+(async () => {
+    try {
+        await pubClient.connect();
+        await subClient.connect();
+        subClient.subscribe(channel, (message, channel) => {
+            isClicked = parseInt(message);
+            broadcastNewState(parseInt(message));
+        });
+    } catch (error) {
+        console.error('error connecting to redis:', error);
+    }
+})();
+
 app.ws('/', (ws, req) => {
     ws.send(JSON.stringify({
         type: 'greet',
@@ -15,16 +35,10 @@ app.ws('/', (ws, req) => {
     ws.on('message', (msg)=>{
         let messageObject = JSON.parse(msg);
         if(messageObject.type === 'updateState'){
-            isClicked = messageObject.isClicked;
-            broadcastNewState(messageObject.isClicked)
-        }else if(messageObject.type === 'greet'){
-            ws.send(JSON.stringify({
-                type: 'greet',
-                isClicked: isClicked
-              })); 
+            pubClient.publish(channel, messageObject.isClicked.toString());
         }
     })
-})
+})                            
 
 
 const broadcastNewState = (state) => {
