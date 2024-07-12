@@ -1,22 +1,18 @@
-import logo from './logo.svg';
 import './App.css';
+import { useState } from "react";
 
 function App() {
+  const [isClicked, setClicked] = useState(false);
   return (
     <div className="App">
       <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
+        <div className={`mainbutton ${isClicked ? "clicked" : "notclicked"}`} onClick={() => {
+            if (isClicked) {
+                setClicked(false);
+            } else {
+                setClicked(true);
+            }
+        }}>click me to change the color</div>
       </header>
     </div>
   );
