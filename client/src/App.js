@@ -5,22 +5,48 @@ function App() {
   const [isClicked, setClicked] = useState(0); //0 not loaded; 1 clicked, red; 2 not clicked
   const [socketState, setSState] = useState(null);
   useEffect(() => {
-    const socket = new WebSocket('ws://localhost:5000');
-    setSState(socket);
-    socket.onopen = () => {
-      socket.send(JSON.stringify({
-        type: 'greet',
-        msg: 'sent u message from client'
-      }));
-    };
-    socket.onmessage = (event) => {
-      console.log(event.data);
-      let messageObject = JSON.parse(event.data);
-      setClicked(messageObject.isClicked);
-    };
+    let socket;
+    let heartbeat;
+    let reconnectTimeout;
+    const connect = () => {
+      socket = new WebSocket('ws://localhost:5000');
+      socket.onopen = () => {
+        socket.send(JSON.stringify({
+          type: 'greet',
+          msg: 'sent u message from client'
+        }));
+        heartbeat = setInterval(() => {
+          if (socket.readyState === WebSocket.OPEN) {
+            socket.send(JSON.stringify({ type: 'ping' }));
+          }
+        }, 30000);
+      };
+      socket.onmessage = (event) => {
+        console.log(event.data);
+        let messageObject = JSON.parse(event.data);
+        setClicked(messageObject.isClicked);
+      };
+      socket.onclose = (event) => {
+        console.log('WebSocket connection closed:', event);
+
+        clearInterval(heartbeat);
+
+        reconnectTimeout = setTimeout(() => {
+          console.log('Attempting to reconnect...');
+          connect();
+        }, 5000);
+      };
+
+      setSState(socket);
+    }
+
+    connect();
+    
     return () => {
       if (socket.readyState === WebSocket.OPEN) {
         console.log('Cleaning up WebSocket');
+        clearTimeout(reconnectTimeout);
+        clearInterval(heartbeat);
         socket.close();
       }
     };
